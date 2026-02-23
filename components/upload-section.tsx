@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { useTemplateStore } from "@/lib/template-store"
 import { Loader2, ScanSearch } from "lucide-react"
 
 export function UploadSection() {
