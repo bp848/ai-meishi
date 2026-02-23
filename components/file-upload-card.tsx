@@ -5,17 +5,23 @@ import { Upload, X, ImageIcon, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024
-const ACCEPTED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".pdf"]
+const MAX_FILE_SIZE = 30 * 1024 * 1024
+const ACCEPTED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".webp"]
 const ACCEPTED_MIME_TYPES = [
+  "application/pdf",
   "image/jpeg",
   "image/png",
   "image/webp",
-  "application/pdf",
 ]
 
 function isPdf(file: File) {
   return file.type === "application/pdf"
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 interface FileUploadCardProps {
@@ -39,11 +45,11 @@ export function FileUploadCard({
   const validateAndSelect = useCallback(
     (f: File) => {
       if (!ACCEPTED_MIME_TYPES.includes(f.type)) {
-        onError("JPEG / PNG / WebP / PDF 形式のファイルを選択してください")
+        onError("PDF / JPEG / PNG / WebP 形式のファイルを選択してください")
         return
       }
       if (f.size > MAX_FILE_SIZE) {
-        onError("ファイルサイズは20MB以下にしてください")
+        onError("ファイルサイズは30MB以下にしてください")
         return
       }
       onFileSelect(f)
@@ -133,17 +139,24 @@ export function FileUploadCard({
                 className="max-h-40 max-w-full rounded-md object-contain"
               />
             ) : (
-              <div className="flex h-28 w-28 items-center justify-center rounded-lg bg-primary/10">
-                <FileText className="h-12 w-12 text-primary" />
+              <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-primary/10">
+                <FileText className="h-10 w-10 text-primary" />
               </div>
             )}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              {isPdf(file) ? (
-                <FileText className="h-4 w-4" />
-              ) : (
-                <ImageIcon className="h-4 w-4" />
-              )}
-              <span className="max-w-[180px] truncate">{file.name}</span>
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="flex items-center gap-2 text-sm text-foreground">
+                {isPdf(file) ? (
+                  <FileText className="h-4 w-4 shrink-0 text-primary" />
+                ) : (
+                  <ImageIcon className="h-4 w-4 shrink-0 text-primary" />
+                )}
+                <span className="max-w-[200px] truncate font-medium">
+                  {file.name}
+                </span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {formatFileSize(file.size)}
+              </span>
             </div>
             <Button
               variant="ghost"
@@ -156,14 +169,23 @@ export function FileUploadCard({
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <Upload className="h-8 w-8" />
-            <p className="text-sm font-medium">
-              {isDragActive
-                ? "ドロップしてアップロード"
-                : "クリックまたはドラッグ&ドロップ"}
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
+              <FileText className="h-7 w-7 text-primary" />
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-sm font-medium text-foreground">
+                {isDragActive
+                  ? "ドロップしてアップロード"
+                  : "PDFをドラッグ&ドロップ"}
+              </p>
+              <p className="text-xs">
+                {"またはクリックして選択"}
+              </p>
+            </div>
+            <p className="text-[11px] text-muted-foreground/70">
+              {"PDF / JPEG / PNG / WebP (最大30MB)"}
             </p>
-            <p className="text-xs">{"JPEG / PNG / WebP / PDF (最大20MB)"}</p>
           </div>
         )}
       </div>

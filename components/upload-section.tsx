@@ -58,7 +58,7 @@ export function UploadSection() {
             名刺をアップロード
           </CardTitle>
           <CardDescription>
-            名刺の画像またはPDFをアップロードすると、AIが自動で情報を抽出します
+            名刺のPDF（または画像）をアップロードすると、AIが自動で情報を抽出します
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
@@ -106,7 +106,7 @@ export function UploadSection() {
 
           {!frontFile && !storeError && (
             <p className="text-center text-xs text-muted-foreground">
-              表面の画像またはPDFをアップロードすると解析を開始できます
+              表面のPDF（または画像）をアップロードすると解析を開始できます
             </p>
           )}
         </CardContent>
