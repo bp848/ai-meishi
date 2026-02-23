@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Annotated
+
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import Response
 
@@ -17,6 +19,9 @@ ALLOWED_CONTENT_TYPES = {
     "application/pdf",
 }
 
+FrontUpload = Annotated[UploadFile, File(...)]
+BackUpload = Annotated[UploadFile | None, File()]
+
 
 @app.get("/health")
 def health() -> dict[str, str]:
@@ -24,7 +29,7 @@ def health() -> dict[str, str]:
 
 
 @app.post("/analyze")
-async def analyze(front: UploadFile = File(...), back: UploadFile | None = File(None)):
+async def analyze(front: FrontUpload, back: BackUpload = None):
     _validate_content_type(front)
     front_bytes = await front.read()
 

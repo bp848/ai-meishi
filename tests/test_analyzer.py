@@ -84,3 +84,21 @@ def test_zero_image_dimensions_raises_value_error(monkeypatch):
     analyzer = TemplateAnalyzer()
     with pytest.raises(ValueError, match="Invalid image dimensions"):
         analyzer._extract_aspect_ratio(b"fake-image")
+
+
+def test_invalid_pdf_dimensions_raises_value_error(monkeypatch):
+    class DummyMediaBox:
+        width = 0
+        height = 100
+
+    class DummyPage:
+        mediabox = DummyMediaBox()
+
+    class DummyPdf:
+        pages = [DummyPage()]
+
+    monkeypatch.setattr("ai_meishi.analyzer.PdfReader", lambda *args, **kwargs: DummyPdf())
+
+    analyzer = TemplateAnalyzer()
+    with pytest.raises(ValueError, match="Invalid PDF dimensions"):
+        analyzer._extract_aspect_ratio(b"%PDF-simulated")

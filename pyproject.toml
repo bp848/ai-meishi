@@ -30,7 +30,6 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
-ignore = ["B008"]
 
 [build-system]
 requires = ["setuptools>=69.0"]
