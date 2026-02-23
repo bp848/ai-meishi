@@ -19,30 +19,61 @@ class AnalysisResponse(BaseModel):
 @router.post("/files/analyze")
 async def analyze_file(file: UploadFile = File(...)):
     """
-    名刺画像を解析してテキスト情報を抽出
+    名刺画像またはPDFを解析してテキスト情報を抽出
     """
-    if not file.content_type.startswith("image/"):
+    if not (file.content_type.startswith("image/") or file.content_type == "application/pdf"):
         raise HTTPException(status_code=415, detail="対応していないファイル形式です")
     
     try:
         # ファイルを読み込み
         contents = await file.read()
         
-        # モック解析結果（実際の実装ではOpenAI APIなどを呼び出す）
-        mock_result = AnalysisResult(
-            extracted_text="サンプル会社名\n田中太郎\n営業部長\nexample@company.com\n03-1234-5678\n東京都渋谷区1-2-3\nhttps://example.com",
-            card_fields={
-                "company": "サンプル会社",
-                "name": "田中太郎", 
-                "title": "営業部長",
-                "email": "example@company.com",
-                "phone": "03-1234-5678",
-                "address": "東京都渋谷区1-2-3",
-                "website": "https://example.com"
-            },
-            logos=[],
-            metadata={"confidence": 0.95}
-        )
+        # PDFの場合はテキスト抽出処理
+        if file.content_type == "application/pdf":
+            from pypdf import PdfReader
+            import io
+            
+            pdf_stream = io.BytesIO(contents)
+            pdf_reader = PdfReader(pdf_stream)
+            text = ""
+            for page in pdf_reader.pages:
+                text += page.extract_text() + "\n"
+            
+            # PDFから名刺情報を解析（簡易的な正規表現）
+            import re
+            email_match = re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', text)
+            phone_match = re.search(r'(\d{2,4}[-\s]?\d{2,4}[-\s]?\d{4})', text)
+            
+            mock_result = AnalysisResult(
+                extracted_text=text.strip(),
+                card_fields={
+                    "company": "PDFから抽出された会社名",
+                    "name": "PDFから抽出された氏名", 
+                    "title": "PDFから抽出された役職",
+                    "email": email_match.group(0) if email_match else "",
+                    "phone": phone_match.group(0) if phone_match else "",
+                    "address": "PDFから抽出された住所",
+                    "website": ""
+                },
+                logos=[],
+                metadata={"source": "pdf", "confidence": 0.85}
+            )
+        else:
+            # 画像の場合のモック解析
+            mock_result = AnalysisResult(
+                extracted_text="サンプル会社名\n田中太郎\n営業部長\nexample@company.com\n03-1234-5678\n東京都渋谷区1-2-3\nhttps://example.com",
+                card_fields={
+                    "company": "サンプル会社",
+                    "name": "田中太郎", 
+                    "title": "営業部長",
+                    "email": "example@company.com",
+                    "phone": "03-1234-5678",
+                    "address": "東京都渋谷区1-2-3",
+                    "website": "https://example.com"
+                },
+                logos=[],
+                metadata={"source": "image", "confidence": 0.95}
+            )
         
         return AnalysisResponse(
             mime_type=file.content_type,

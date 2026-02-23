@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
-const ACCEPTED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"]
-const ACCEPTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"]
+const ACCEPTED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".pdf"]
+const ACCEPTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"]
 
 interface FileUploadCardProps {
   label: string
@@ -30,7 +30,7 @@ export function FileUploadCard({
   const validateAndSelect = useCallback(
     (f: File) => {
       if (!ACCEPTED_MIME_TYPES.includes(f.type)) {
-        onError("JPEG/PNG/WebP形式のファイルを選択してください")
+        onError("JPEG/PNG/WebP/PDF形式のファイルを選択してください")
         return
       }
       if (f.size > MAX_FILE_SIZE) {

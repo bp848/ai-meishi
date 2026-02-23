@@ -55,7 +55,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   analyzeFiles: async () => {
     const { frontFile } = get()
     if (!frontFile) {
-      set({ error: "表面の画像をアップロードしてください" })
+      set({ error: "表面の画像またはPDFをアップロードしてください" })
       return
     }
     set({ isLoading: true, error: null })
@@ -69,7 +69,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         isLoading: false,
       })
       
-      // 自动保存模板（如果公司名存在）
+      // 自動保存テンプレート（如果公司名存在）
       if (cardFields.company && cardFields.company.trim()) {
         try {
           // 延迟执行避免状态冲突

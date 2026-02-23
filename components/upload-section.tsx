@@ -52,7 +52,7 @@ export function UploadSection() {
             名刺をアップロード
           </CardTitle>
           <CardDescription>
-            名刺の画像をアップロードすると、AIが自動で情報を抽出します
+            名刺の画像またはPDFをアップロードすると、AIが自動で情報を抽出します
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
