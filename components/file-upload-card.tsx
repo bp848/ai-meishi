@@ -1,17 +1,13 @@
 "use client"
 
-import { useCallback } from "react"
-import { useDropzone } from "react-dropzone"
+import { useCallback, useRef, useState } from "react"
 import { Upload, X, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const ACCEPTED_TYPES = {
-  "image/jpeg": [".jpg", ".jpeg"],
-  "image/png": [".png"],
-  "image/webp": [".webp"],
-}
+const MAX_FILE_SIZE = 10 * 1024 * 1024
+const ACCEPTED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"]
+const ACCEPTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"]
 
 interface FileUploadCardProps {
   label: string
@@ -28,25 +24,55 @@ export function FileUploadCard({
   onFileSelect,
   onError,
 }: FileUploadCardProps) {
-  const onDrop = useCallback(
-    (acceptedFiles: File[], rejectedFiles: unknown[]) => {
-      if (rejectedFiles && (rejectedFiles as Array<unknown>).length > 0) {
-        onError("JPEG/PNG/WebP形式で10MB以下のファイルを選択してください")
+  const [isDragActive, setIsDragActive] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const validateAndSelect = useCallback(
+    (f: File) => {
+      if (!ACCEPTED_MIME_TYPES.includes(f.type)) {
+        onError("JPEG/PNG/WebP形式のファイルを選択してください")
         return
       }
-      if (acceptedFiles.length > 0) {
-        onFileSelect(acceptedFiles[0])
+      if (f.size > MAX_FILE_SIZE) {
+        onError("ファイルサイズは10MB以下にしてください")
+        return
       }
+      onFileSelect(f)
     },
     [onFileSelect, onError]
   )
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: ACCEPTED_TYPES,
-    maxSize: MAX_FILE_SIZE,
-    multiple: false,
-  })
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragActive(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragActive(false)
+  }, [])
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setIsDragActive(false)
+      const droppedFile = e.dataTransfer.files[0]
+      if (droppedFile) validateAndSelect(droppedFile)
+    },
+    [validateAndSelect]
+  )
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selected = e.target.files?.[0]
+      if (selected) validateAndSelect(selected)
+      e.target.value = ""
+    },
+    [validateAndSelect]
+  )
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -57,7 +83,10 @@ export function FileUploadCard({
     <div className="flex flex-col gap-2">
       <p className="text-sm font-medium text-foreground">{label}</p>
       <div
-        {...getRootProps()}
+        onClick={() => inputRef.current?.click()}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         className={cn(
           "relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors",
           isDragActive
@@ -66,8 +95,24 @@ export function FileUploadCard({
               ? "border-border bg-card"
               : "border-muted-foreground/25 bg-card hover:border-primary/50 hover:bg-primary/5"
         )}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault()
+            inputRef.current?.click()
+          }
+        }}
+        aria-label={`${label}をアップロード`}
       >
-        <input {...getInputProps()} aria-label={`${label}をアップロード`} />
+        <input
+          ref={inputRef}
+          type="file"
+          accept={ACCEPTED_EXTENSIONS.join(",")}
+          onChange={handleChange}
+          className="sr-only"
+          aria-label={`${label}のファイル選択`}
+        />
 
         {preview ? (
           <div className="flex flex-col items-center gap-3">
@@ -99,7 +144,7 @@ export function FileUploadCard({
                 ? "ドロップしてアップロード"
                 : "クリックまたはドラッグ&ドロップ"}
             </p>
-            <p className="text-xs">JPEG / PNG / WebP (最大10MB)</p>
+            <p className="text-xs">{"JPEG / PNG / WebP (最大10MB)"}</p>
           </div>
         )}
       </div>
