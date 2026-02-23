@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { AnalysisResult, CardFields } from "./types"
+import type { AnalysisResult, CardFields, CardFieldKey } from "./types"
 import { DEFAULT_CARD_FIELDS } from "./types"
 import { analyzeFile, exportPDF } from "./api"
 
@@ -15,7 +15,7 @@ interface AppState {
   setFrontFile: (file: File | null) => void
   setBackFile: (file: File | null) => void
   analyzeFiles: () => Promise<void>
-  updateFieldValue: (key: keyof CardFields, value: string) => void
+  updateFieldValue: (key: CardFieldKey, value: string) => void
   setFieldValues: (fields: CardFields) => void
   exportPDF: () => Promise<Blob>
   reset: () => void

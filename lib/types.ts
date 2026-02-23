@@ -1,13 +1,13 @@
-export interface CardFields {
-  [key: string]: string
-  company: string
-  name: string
-  title: string
-  email: string
-  phone: string
-  address: string
-  website: string
-}
+export type CardFieldKey =
+  | "company"
+  | "name"
+  | "title"
+  | "email"
+  | "phone"
+  | "address"
+  | "website"
+
+export type CardFields = Record<CardFieldKey, string>
 
 export interface AnalysisResult {
   extracted_text: string
@@ -39,7 +39,7 @@ export interface TemplateField {
   color: string
 }
 
-export const CARD_FIELD_LABELS: Record<keyof CardFields, string> = {
+export const CARD_FIELD_LABELS: Record<CardFieldKey, string> = {
   company: "会社名",
   name: "氏名",
   title: "役職",

@@ -2,6 +2,7 @@
 
 import { Header } from "@/components/header"
 import { UploadSection } from "@/components/upload-section"
+import { TemplateSelector } from "@/components/template-selector"
 import { ToastContainer } from "@/components/toast-container"
 import { CreditCard, ScanSearch, FileText } from "lucide-react"
 
@@ -43,6 +44,8 @@ export default function HomePage() {
         </div>
 
         <UploadSection />
+
+        <TemplateSelector />
 
         <section className="mt-16 grid w-full max-w-3xl gap-6 md:grid-cols-3">
           <FeatureItem
