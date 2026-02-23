@@ -61,14 +61,14 @@ export function UploadSection() {
               file={frontFile}
               preview={frontPreview}
               onFileSelect={setFrontFile}
-              onError={(msg) => error("ファイルエラー", msg)}
+              onError={(msg) => showError("ファイルエラー", msg)}
             />
             <FileUploadCard
               label="裏面 (任意)"
               file={backFile}
               preview={backPreview}
               onFileSelect={setBackFile}
-              onError={(msg) => error("ファイルエラー", msg)}
+              onError={(msg) => showError("ファイルエラー", msg)}
             />
           </div>
 
