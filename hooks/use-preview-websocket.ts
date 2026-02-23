@@ -22,7 +22,7 @@ interface PreviewMessage {
         color: string
       }>
     }
-    values: CardFields
+    values: Record<string, string>
   }
 }
 
