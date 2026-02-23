@@ -30,13 +30,19 @@ export function UploadSection() {
   } = useAppStore()
   const { error: showError } = useToast()
 
+  const { addTemplate } = useTemplateStore()
+
   const handleAnalyze = async () => {
     try {
       await analyzeFiles()
-      const currentError = useAppStore.getState().error
-      if (currentError) {
-        showError("解析に失敗しました", currentError)
+      const state = useAppStore.getState()
+      if (state.error) {
+        showError("解析に失敗しました", state.error)
         return
+      }
+      // Auto-register company template if company name was extracted
+      if (state.fieldValues.company.trim()) {
+        addTemplate(state.fieldValues)
       }
       router.push("/editor")
     } catch {
@@ -52,7 +58,7 @@ export function UploadSection() {
             名刺をアップロード
           </CardTitle>
           <CardDescription>
-            名刺の画像をアップロードすると、AIが自動で情報を抽出します
+            名刺の画像またはPDFをアップロードすると、AIが自動で情報を抽出します
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
@@ -100,7 +106,7 @@ export function UploadSection() {
 
           {!frontFile && !storeError && (
             <p className="text-center text-xs text-muted-foreground">
-              表面の画像をアップロードすると解析を開始できます
+              表面の画像またはPDFをアップロードすると解析を開始できます
             </p>
           )}
         </CardContent>

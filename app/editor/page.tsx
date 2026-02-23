@@ -109,21 +109,52 @@ export default function EditorPage() {
 
 function UploadedImageRef() {
   const frontPreview = useAppStore((s) => s.frontPreview)
+  const frontFile = useAppStore((s) => s.frontFile)
 
-  if (!frontPreview) return null
+  if (!frontFile) return null
+
+  const isPdf = frontFile.type === "application/pdf"
 
   return (
     <Card>
       <CardContent className="p-4">
         <p className="mb-2 text-xs font-medium text-muted-foreground">
-          アップロード画像
+          アップロードファイル
         </p>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={frontPreview}
-          alt="アップロードされた名刺画像"
-          className="w-full rounded-md object-contain"
-        />
+        {frontPreview && !isPdf ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={frontPreview}
+            alt="アップロードされた名刺画像"
+            className="w-full rounded-md object-contain"
+          />
+        ) : (
+          <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+              <svg
+                className="h-6 w-6 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium text-foreground">
+                {frontFile.name}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {(frontFile.size / 1024).toFixed(0)} KB
+              </span>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

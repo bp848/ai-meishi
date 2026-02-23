@@ -1,13 +1,22 @@
 "use client"
 
 import { useCallback, useRef, useState } from "react"
-import { Upload, X, ImageIcon } from "lucide-react"
+import { Upload, X, ImageIcon, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024
-const ACCEPTED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"]
-const ACCEPTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"]
+const MAX_FILE_SIZE = 20 * 1024 * 1024
+const ACCEPTED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".pdf"]
+const ACCEPTED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+]
+
+function isPdf(file: File) {
+  return file.type === "application/pdf"
+}
 
 interface FileUploadCardProps {
   label: string
@@ -30,11 +39,11 @@ export function FileUploadCard({
   const validateAndSelect = useCallback(
     (f: File) => {
       if (!ACCEPTED_MIME_TYPES.includes(f.type)) {
-        onError("JPEG/PNG/WebP形式のファイルを選択してください")
+        onError("JPEG / PNG / WebP / PDF 形式のファイルを選択してください")
         return
       }
       if (f.size > MAX_FILE_SIZE) {
-        onError("ファイルサイズは10MB以下にしてください")
+        onError("ファイルサイズは20MB以下にしてください")
         return
       }
       onFileSelect(f)
@@ -114,17 +123,27 @@ export function FileUploadCard({
           aria-label={`${label}のファイル選択`}
         />
 
-        {preview ? (
+        {file ? (
           <div className="flex flex-col items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={preview}
-              alt={`${label}プレビュー`}
-              className="max-h-40 max-w-full rounded-md object-contain"
-            />
+            {preview && !isPdf(file) ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={preview}
+                alt={`${label}プレビュー`}
+                className="max-h-40 max-w-full rounded-md object-contain"
+              />
+            ) : (
+              <div className="flex h-28 w-28 items-center justify-center rounded-lg bg-primary/10">
+                <FileText className="h-12 w-12 text-primary" />
+              </div>
+            )}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <ImageIcon className="h-4 w-4" />
-              <span className="max-w-[180px] truncate">{file?.name}</span>
+              {isPdf(file) ? (
+                <FileText className="h-4 w-4" />
+              ) : (
+                <ImageIcon className="h-4 w-4" />
+              )}
+              <span className="max-w-[180px] truncate">{file.name}</span>
             </div>
             <Button
               variant="ghost"
@@ -144,7 +163,7 @@ export function FileUploadCard({
                 ? "ドロップしてアップロード"
                 : "クリックまたはドラッグ&ドロップ"}
             </p>
-            <p className="text-xs">{"JPEG / PNG / WebP (最大10MB)"}</p>
+            <p className="text-xs">{"JPEG / PNG / WebP / PDF (最大20MB)"}</p>
           </div>
         )}
       </div>

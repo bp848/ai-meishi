@@ -38,7 +38,7 @@ export default function HomePage() {
             AI名刺解析
           </h1>
           <p className="mt-4 max-w-lg text-pretty text-lg leading-relaxed text-muted-foreground">
-            名刺画像をアップロードするだけで、AIが自動で情報を読み取り。
+            名刺画像やPDFをアップロードするだけで、AIが自動で情報を読み取り。
             テンプレート編集からPDF出力まで、ワンストップで対応。
           </p>
         </div>
@@ -51,7 +51,7 @@ export default function HomePage() {
           <FeatureItem
             icon={<ScanSearch className="h-6 w-6" />}
             title="AI自動解析"
-            description="名刺画像をアップロードするだけで、会社名・氏名・連絡先などを自動抽出"
+            description="名刺画像やPDFをアップロードするだけで、会社名・氏名・連絡先などを自動抽出"
           />
           <FeatureItem
             icon={<CreditCard className="h-6 w-6" />}

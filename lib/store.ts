@@ -34,18 +34,20 @@ export const useAppStore = create<AppState>((set, get) => ({
   setFrontFile: (file) => {
     const prev = get().frontPreview
     if (prev) URL.revokeObjectURL(prev)
+    const isImage = file && file.type.startsWith("image/")
     set({
       frontFile: file,
-      frontPreview: file ? URL.createObjectURL(file) : null,
+      frontPreview: file && isImage ? URL.createObjectURL(file) : null,
     })
   },
 
   setBackFile: (file) => {
     const prev = get().backPreview
     if (prev) URL.revokeObjectURL(prev)
+    const isImage = file && file.type.startsWith("image/")
     set({
       backFile: file,
-      backPreview: file ? URL.createObjectURL(file) : null,
+      backPreview: file && isImage ? URL.createObjectURL(file) : null,
     })
   },
 
