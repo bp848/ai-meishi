@@ -1,6 +1,6 @@
 "use client"
 
-import type { CardFields } from "@/lib/types"
+import type { CardFields, CardFieldKey } from "@/lib/types"
 import { CARD_FIELD_LABELS } from "@/lib/types"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
-const FIELD_ICONS: Record<keyof CardFields, LucideIcon> = {
+const FIELD_ICONS: Record<CardFieldKey, LucideIcon> = {
   company: Building2,
   name: User,
   title: Briefcase,
@@ -25,7 +25,7 @@ const FIELD_ICONS: Record<keyof CardFields, LucideIcon> = {
   website: Globe,
 }
 
-const FIELD_ORDER: (keyof CardFields)[] = [
+const FIELD_ORDER: CardFieldKey[] = [
   "company",
   "name",
   "title",
@@ -37,7 +37,7 @@ const FIELD_ORDER: (keyof CardFields)[] = [
 
 interface FieldEditorProps {
   fields: CardFields
-  onFieldChange: (key: keyof CardFields, value: string) => void
+  onFieldChange: (key: CardFieldKey, value: string) => void
 }
 
 export function FieldEditor({ fields, onFieldChange }: FieldEditorProps) {

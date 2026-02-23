@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, RotateCcw } from "lucide-react"
-import type { CardFields } from "@/lib/types"
+import type { CardFieldKey } from "@/lib/types"
 import { DEFAULT_CARD_FIELDS } from "@/lib/types"
 import { usePreviewWebSocket } from "@/hooks/use-preview-websocket"
 
@@ -36,7 +36,7 @@ export default function EditorPage() {
     }
   }, [fieldValues, connected, sendPreviewUpdate])
 
-  const handleFieldChange = (key: keyof CardFields, value: string) => {
+  const handleFieldChange = (key: CardFieldKey, value: string) => {
     updateFieldValue(key, value)
   }
 
