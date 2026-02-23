@@ -1,6 +1,7 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useState } from "react"
+import { useDropzone } from "react-dropzone"
 import { Upload, X, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -25,126 +26,107 @@ export function FileUploadCard({
   onError,
 }: FileUploadCardProps) {
   const [isDragActive, setIsDragActive] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
 
-  const validateAndSelect = useCallback(
-    (f: File) => {
-      if (!ACCEPTED_MIME_TYPES.includes(f.type)) {
-        onError("JPEG/PNG/WebP/PDF形式のファイルを選択してください")
+  const onDrop = useCallback(
+    (acceptedFiles: File[], fileRejections: any[]) => {
+      if (fileRejections.length > 0) {
+        const rejection = fileRejections[0]
+        if (rejection.errors.some((e: any) => e.code === "file-too-large")) {
+          onError("ファイルサイズは10MB以下にしてください")
+        } else if (rejection.errors.some((e: any) => e.code === "file-invalid-type")) {
+          onError("JPEG/PNG/WebP/PDF形式のファイルを選択してください")
+        } else {
+          onError("ファイルのアップロードに失敗しました")
+        }
         return
       }
-      if (f.size > MAX_FILE_SIZE) {
-        onError("ファイルサイズは10MB以下にしてください")
-        return
+
+      if (acceptedFiles.length > 0) {
+        onFileSelect(acceptedFiles[0])
       }
-      onFileSelect(f)
     },
     [onFileSelect, onError]
   )
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragActive(true)
-  }, [])
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragActive(false)
-  }, [])
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setIsDragActive(false)
-      const droppedFile = e.dataTransfer.files[0]
-      if (droppedFile) validateAndSelect(droppedFile)
+  const { getRootProps, getInputProps, isDragActive: dropzoneActive } = useDropzone({
+    onDrop,
+    accept: {
+      "image/*": [".jpg", ".jpeg", ".png", ".webp"],
+      "application/pdf": [".pdf"],
     },
-    [validateAndSelect]
-  )
+    maxSize: MAX_FILE_SIZE,
+    multiple: false,
+  })
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const selected = e.target.files?.[0]
-      if (selected) validateAndSelect(selected)
-      e.target.value = ""
-    },
-    [validateAndSelect]
-  )
-
-  const handleRemove = (e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handleRemove = () => {
     onFileSelect(null)
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <p className="text-sm font-medium text-foreground">{label}</p>
+    <div className="relative">
       <div
-        onClick={() => inputRef.current?.click()}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
+        {...getRootProps()}
         className={cn(
-          "relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors",
-          isDragActive
-            ? "border-primary bg-primary/5"
-            : file
-              ? "border-border bg-card"
-              : "border-muted-foreground/25 bg-card hover:border-primary/50 hover:bg-primary/5"
+          "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+          "hover:border-primary/50 hover:bg-muted/50",
+          (dropzoneActive || isDragActive) && "border-primary bg-primary/5",
+          file && "border-primary bg-primary/10"
         )}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault()
-            inputRef.current?.click()
-          }
-        }}
-        aria-label={`${label}をアップロード`}
       >
-        <input
-          ref={inputRef}
-          type="file"
-          accept={ACCEPTED_EXTENSIONS.join(",")}
-          onChange={handleChange}
-          className="sr-only"
-          aria-label={`${label}のファイル選択`}
-        />
-
-        {preview ? (
-          <div className="flex flex-col items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={preview}
-              alt={`${label}プレビュー`}
-              className="max-h-40 max-w-full rounded-md object-contain"
-            />
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <ImageIcon className="h-4 w-4" />
-              <span className="max-w-[180px] truncate">{file?.name}</span>
+        <input {...getInputProps()} />
+        
+        {file ? (
+          <div className="space-y-4">
+            {preview && (
+              <div className="mx-auto w-24 h-24 rounded-md overflow-hidden bg-muted">
+                {file.type === "application/pdf" ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                ) : (
+                  <img
+                    src={preview}
+                    alt="プレビュー"
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
+            )}
+            <div className="text-sm">
+              <p className="font-medium text-foreground">{file.name}</p>
+              <p className="text-muted-foreground">
+                {(file.size / 1024 / 1024).toFixed(2)} MB
+              </p>
             </div>
             <Button
-              variant="ghost"
+              type="button"
+              variant="outline"
               size="sm"
-              onClick={handleRemove}
-              className="text-destructive hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleRemove()
+              }}
             >
-              <X className="mr-1 h-4 w-4" />
+              <X className="w-4 h-4 mr-1" />
               削除
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <Upload className="h-8 w-8" />
-            <p className="text-sm font-medium">
-              {isDragActive
-                ? "ドロップしてアップロード"
-                : "クリックまたはドラッグ&ドロップ"}
-            </p>
-            <p className="text-xs">{"JPEG / PNG / WebP (最大10MB)"}</p>
+          <div className="space-y-4">
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Upload className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                {dropzoneActive ? "ファイルをドロップ" : label}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                クリックまたはドラッグ＆ドロップ
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                JPEG, PNG, WebP, PDF (最大10MB)
+              </p>
+            </div>
           </div>
         )}
       </div>

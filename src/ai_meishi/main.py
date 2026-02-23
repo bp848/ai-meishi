@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 from .api import router
+from .websocket import websocket_endpoint
 
 app = FastAPI(
     title="AI Meishi API",
@@ -21,6 +22,10 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(router)
+
+@app.websocket("/api/v1/preview/ws")
+async def websocket_preview(websocket: WebSocket):
+    await websocket_endpoint(websocket)
 
 @app.get("/health")
 async def health_check():

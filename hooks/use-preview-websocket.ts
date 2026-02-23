@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react"
+import { io, Socket } from "socket.io-client"
 import type { CardFields } from "@/lib/types"
 
 const WS_BASE =
@@ -27,42 +28,41 @@ interface PreviewMessage {
 }
 
 export function usePreviewWebSocket() {
-  const ws = useRef<WebSocket | null>(null)
+  const socket = useRef<Socket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [connected, setConnected] = useState(false)
   const [previewHtml, setPreviewHtml] = useState<string | null>(null)
 
   const connect = useCallback(() => {
-    if (ws.current?.readyState === WebSocket.OPEN) return
+    if (socket.current?.connected) return
 
     try {
-      const socket = new WebSocket(`${WS_BASE}/api/v1/preview/ws`)
+      const newSocket = io(WS_BASE, {
+        path: "/api/v1/preview/ws",
+        transports: ["websocket"],
+      })
 
-      socket.onopen = () => {
+      newSocket.on("connect", () => {
         setConnected(true)
-      }
+      })
 
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data)
-          if (data.type === "preview" && data.html) {
-            setPreviewHtml(data.html)
-          }
-        } catch {
-          // ignore parse errors
+      newSocket.on("preview", (data) => {
+        if (data.type === "preview" && data.html) {
+          setPreviewHtml(data.html)
         }
-      }
+      })
 
-      socket.onclose = () => {
+      newSocket.on("disconnect", () => {
         setConnected(false)
         reconnectTimer.current = setTimeout(connect, 3000)
-      }
+      })
 
-      socket.onerror = () => {
-        socket.close()
-      }
+      newSocket.on("connect_error", () => {
+        setConnected(false)
+        reconnectTimer.current = setTimeout(connect, 3000)
+      })
 
-      ws.current = socket
+      socket.current = newSocket
     } catch {
       reconnectTimer.current = setTimeout(connect, 3000)
     }
@@ -72,13 +72,13 @@ export function usePreviewWebSocket() {
     connect()
     return () => {
       if (reconnectTimer.current) clearTimeout(reconnectTimer.current)
-      ws.current?.close()
+      socket.current?.disconnect()
     }
   }, [connect])
 
   const sendPreviewUpdate = useCallback(
     (values: CardFields) => {
-      if (ws.current?.readyState !== WebSocket.OPEN) return
+      if (!socket.current?.connected) return
 
       const message: PreviewMessage = {
         type: "preview",
@@ -102,7 +102,7 @@ export function usePreviewWebSocket() {
         },
       }
 
-      ws.current.send(JSON.stringify(message))
+      socket.current.emit("preview", message)
     },
     []
   )

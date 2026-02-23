@@ -17,7 +17,7 @@ class AnalysisResponse(BaseModel):
     result: AnalysisResult
 
 @router.post("/files/analyze")
-async def analyze_file(file: UploadFile = File(...)):
+async def analyze_file(file: UploadFile = File(...), overrides: Optional[str] = None):
     """
     名刺画像またはPDFを解析してテキスト情報を抽出
     """
@@ -44,36 +44,41 @@ async def analyze_file(file: UploadFile = File(...)):
             email_match = re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', text)
             phone_match = re.search(r'(\d{2,4}[-\s]?\d{2,4}[-\s]?\d{4})', text)
             
-            mock_result = AnalysisResult(
-                extracted_text=text.strip(),
-                card_fields={
-                    "company": "PDFから抽出された会社名",
-                    "name": "PDFから抽出された氏名", 
-                    "title": "PDFから抽出された役職",
-                    "email": email_match.group(0) if email_match else "",
-                    "phone": phone_match.group(0) if phone_match else "",
-                    "address": "PDFから抽出された住所",
-                    "website": ""
-                },
-                logos=[],
-                metadata={"source": "pdf", "confidence": 0.85}
-            )
+            card_fields = {
+                "company": "PDFから抽出された会社名",
+                "name": "PDFから抽出された氏名", 
+                "title": "PDFから抽出された役職",
+                "email": email_match.group(0) if email_match else "",
+                "phone": phone_match.group(0) if phone_match else "",
+                "address": "PDFから抽出された住所",
+                "website": ""
+            }
         else:
             # 画像の場合のモック解析
-            mock_result = AnalysisResult(
-                extracted_text="サンプル会社名\n田中太郎\n営業部長\nexample@company.com\n03-1234-5678\n東京都渋谷区1-2-3\nhttps://example.com",
-                card_fields={
-                    "company": "サンプル会社",
-                    "name": "田中太郎", 
-                    "title": "営業部長",
-                    "email": "example@company.com",
-                    "phone": "03-1234-5678",
-                    "address": "東京都渋谷区1-2-3",
-                    "website": "https://example.com"
-                },
-                logos=[],
-                metadata={"source": "image", "confidence": 0.95}
-            )
+            card_fields = {
+                "company": "サンプル会社",
+                "name": "田中太郎", 
+                "title": "営業部長",
+                "email": "example@company.com",
+                "phone": "03-1234-5678",
+                "address": "東京都渋谷区1-2-3",
+                "website": "https://example.com"
+            }
+        
+        # overridesパラメータでフィールドを上書き
+        if overrides:
+            try:
+                override_data = json.loads(overrides)
+                card_fields.update(override_data)
+            except json.JSONDecodeError:
+                pass
+        
+        mock_result = AnalysisResult(
+            extracted_text="\n".join(card_fields.values()),
+            card_fields=card_fields,
+            logos=[],
+            metadata={"source": "pdf" if file.content_type == "application/pdf" else "image", "confidence": 0.95}
+        )
         
         return AnalysisResponse(
             mime_type=file.content_type,
