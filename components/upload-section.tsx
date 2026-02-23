@@ -22,18 +22,24 @@ export function UploadSection() {
     frontPreview,
     backPreview,
     isLoading,
+    error: storeError,
     setFrontFile,
     setBackFile,
     analyzeFiles,
   } = useAppStore()
-  const { error } = useToast()
+  const { error: showError } = useToast()
 
   const handleAnalyze = async () => {
     try {
       await analyzeFiles()
+      const currentError = useAppStore.getState().error
+      if (currentError) {
+        showError("解析に失敗しました", currentError)
+        return
+      }
       router.push("/editor")
     } catch {
-      error("解析に失敗しました", "ファイルを確認して再度お試しください")
+      showError("解析に失敗しました", "ファイルを確認して再度お試しください")
     }
   }
 
@@ -85,7 +91,13 @@ export function UploadSection() {
             )}
           </Button>
 
-          {!frontFile && (
+          {storeError && (
+            <p className="text-center text-xs text-destructive">
+              {storeError}
+            </p>
+          )}
+
+          {!frontFile && !storeError && (
             <p className="text-center text-xs text-muted-foreground">
               表面の画像をアップロードすると解析を開始できます
             </p>
