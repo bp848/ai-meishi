@@ -1,4 +1,5 @@
 export interface CardFields {
+  [key: string]: string
   company: string
   name: string
   title: string
