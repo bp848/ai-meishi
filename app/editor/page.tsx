@@ -16,9 +16,11 @@ import type { CardFieldKey } from "@/lib/types"
 import { DEFAULT_CARD_FIELDS } from "@/lib/types"
 import { usePreviewWebSocket } from "@/hooks/use-preview-websocket"
 
+import { TemplateSavedToast } from "@/components/template-saved-toast"
+
 export default function EditorPage() {
   const router = useRouter()
-  const { fieldValues, updateFieldValue, setFieldValues, reset } = useAppStore()
+  const { fieldValues, updateFieldValue, setFieldValues, reset, templateSaved } = useAppStore()
   const { connected, sendPreviewUpdate } = usePreviewWebSocket()
 
   // If no data, still allow manual editing with defaults
@@ -103,6 +105,10 @@ export default function EditorPage() {
         </div>
       </main>
       <ToastContainer />
+      <TemplateSavedToast 
+        companyName={fieldValues.company} 
+        show={templateSaved} 
+      />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { create } from "zustand"
 import type { AnalysisResult, CardFields, CardFieldKey } from "./types"
 import { DEFAULT_CARD_FIELDS } from "./types"
 import { analyzeFile, exportPDF } from "./api"
+import { useTemplateStore } from "./template-store"
 
 interface AppState {
   frontFile: File | null
@@ -12,6 +13,7 @@ interface AppState {
   fieldValues: CardFields
   isLoading: boolean
   error: string | null
+  templateSaved: boolean
   setFrontFile: (file: File | null) => void
   setBackFile: (file: File | null) => void
   analyzeFiles: () => Promise<void>
@@ -30,6 +32,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   fieldValues: { ...DEFAULT_CARD_FIELDS },
   isLoading: false,
   error: null,
+  templateSaved: false,
 
   setFrontFile: (file) => {
     const prev = get().frontPreview
@@ -58,11 +61,29 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const response = await analyzeFile(frontFile)
+      const cardFields = { ...response.result.card_fields }
+      
       set({
         analysisResult: response.result,
-        fieldValues: { ...response.result.card_fields },
+        fieldValues: cardFields,
         isLoading: false,
       })
+      
+      // 自动保存模板（如果公司名存在）
+      if (cardFields.company && cardFields.company.trim()) {
+        try {
+          // 延迟执行避免状态冲突
+          setTimeout(() => {
+            useTemplateStore.getState().addTemplate(cardFields)
+            // 设置模板保存标志
+            set({ templateSaved: true })
+            // 3秒后重置标志
+            setTimeout(() => set({ templateSaved: false }), 3000)
+          }, 100)
+        } catch (templateError) {
+          console.warn("模板保存失败:", templateError)
+        }
+      }
     } catch (err) {
       set({
         isLoading: false,
@@ -123,6 +144,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       fieldValues: { ...DEFAULT_CARD_FIELDS },
       isLoading: false,
       error: null,
+      templateSaved: false,
     })
   },
 }))

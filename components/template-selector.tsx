@@ -24,13 +24,34 @@ export function TemplateSelector() {
 
   const handleSelect = (template: CompanyTemplate) => {
     // Load template fields but clear the name so user enters new person's info
-    setFieldValues({
+    const templateFields = {
       ...DEFAULT_CARD_FIELDS,
       company: template.fields.company,
       address: template.fields.address,
       phone: template.fields.phone,
       website: template.fields.website,
+      // 保留其他字段为空，让用户填写
+      name: "",
+      title: "",
+      email: "",
+    }
+    
+    // 设置字段值并直接跳转到编辑器
+    setFieldValues(templateFields)
+    
+    // 清除之前的分析结果，确保是模板模式
+    const { reset } = useAppStore.getState()
+    // 只重置文件和预览，保留字段值
+    useAppStore.setState({
+      frontFile: null,
+      backFile: null,
+      frontPreview: null,
+      backPreview: null,
+      analysisResult: null,
+      isLoading: false,
+      error: null,
     })
+    
     router.push("/editor")
   }
 
