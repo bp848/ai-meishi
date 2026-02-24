@@ -2,27 +2,44 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { useAppStore } from "@/lib/store"
 import { useToast } from "@/hooks/use-toast"
 import { Download, Loader2 } from "lucide-react"
 
 export function ExportButton() {
   const [exporting, setExporting] = useState(false)
-  const exportPDF = useAppStore((s) => s.exportPDF)
   const { success, error } = useToast()
 
   const handleExport = async () => {
     setExporting(true)
     try {
-      const blob = await exportPDF()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = "meishi.pdf"
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+        import("jspdf"),
+        import("html2canvas"),
+      ])
+
+      const previewEl = document.getElementById("card-preview")
+      if (!previewEl) {
+        error("PDF出力エラー", "プレビュー要素が見つかりません")
+        return
+      }
+
+      const canvas = await html2canvas(previewEl, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      })
+
+      // Standard business card: 91mm x 55mm
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: [55, 91],
+      })
+
+      const imgData = canvas.toDataURL("image/png")
+      pdf.addImage(imgData, "PNG", 0, 0, 91, 55)
+      pdf.save("meishi.pdf")
+
       success("PDF出力完了", "名刺PDFをダウンロードしました")
     } catch {
       error("PDF出力エラー", "PDF出力に失敗しました。再度お試しください")

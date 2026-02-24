@@ -14,7 +14,8 @@ export function BusinessCardPreview({ fields }: BusinessCardPreviewProps) {
         プレビュー
       </p>
       <div
-        className="relative overflow-hidden rounded-lg border bg-card shadow-md"
+        id="card-preview"
+        className="relative overflow-hidden rounded-lg border bg-white shadow-md"
         style={{ aspectRatio: "91 / 55" }}
       >
         <div className="absolute inset-0 flex flex-col justify-between p-5 md:p-6">
