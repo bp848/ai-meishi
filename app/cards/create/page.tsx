@@ -7,6 +7,7 @@ import { ToastContainer } from "@/components/toast-container"
 import { BusinessCardPreview } from "@/components/business-card-preview"
 import { FieldEditor } from "@/components/field-editor"
 import { ExportButton } from "@/components/export-button"
+import { IDMLExportButton } from "@/components/idml-export-button"
 import { useToast } from "@/hooks/use-toast"
 import { useTemplateStore } from "@/lib/template-store"
 import { useCardStore } from "@/lib/card-store"
@@ -177,6 +178,7 @@ function CardCreateContent() {
                     {editCardId ? "名刺を更新" : "名刺を保存"}
                   </Button>
                   <ExportButton />
+                  <IDMLExportButton fields={fields} />
                 </div>
               </CardContent>
             </Card>

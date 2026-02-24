@@ -19,8 +19,9 @@ import {
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Loader2, Save, ScanSearch } from "lucide-react"
+import { IDMLExportButton } from "@/components/idml-export-button"
 import { analyzeFile } from "@/lib/api"
-import type { CardFieldKey, CardFields } from "@/lib/types"
+import type { CardFieldKey, CardFields, CardLayout } from "@/lib/types"
 import { DEFAULT_CARD_FIELDS } from "@/lib/types"
 
 export default function TemplateRegisterPage() {
@@ -31,6 +32,7 @@ export default function TemplateRegisterPage() {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [fields, setFields] = useState<CardFields>({ ...DEFAULT_CARD_FIELDS })
+  const [layout, setLayout] = useState<CardLayout | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analyzed, setAnalyzed] = useState(false)
 
@@ -48,6 +50,7 @@ export default function TemplateRegisterPage() {
     try {
       const response = await analyzeFile(file)
       setFields({ ...response.result.card_fields })
+      setLayout(response.result.layout ?? null)
       setAnalyzed(true)
       success("解析完了", "名刺情報を抽出しました。確認・編集してください。")
     } catch (err) {
@@ -164,6 +167,7 @@ export default function TemplateRegisterPage() {
                       <Save className="mr-2 h-4 w-4" />
                       テンプレートとして登録
                     </Button>
+                    <IDMLExportButton fields={fields} layout={layout} />
                   </div>
                 </div>
               </CardContent>
