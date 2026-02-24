@@ -72,7 +72,7 @@ export default function TemplateRegisterPage() {
       showError("入力エラー", "会社名は必須です")
       return
     }
-    addTemplate(fields)
+    addTemplate(fields, layout)
     success("テンプレート登録完了", `「${fields.company}」を登録しました`)
     router.push("/templates/search")
   }

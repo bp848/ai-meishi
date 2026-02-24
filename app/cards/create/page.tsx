@@ -5,13 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Header } from "@/components/header"
 import { ToastContainer } from "@/components/toast-container"
 import { BusinessCardPreview } from "@/components/business-card-preview"
-import { FieldEditor } from "@/components/field-editor"
 import { ExportButton } from "@/components/export-button"
 import { IDMLExportButton } from "@/components/idml-export-button"
 import { useToast } from "@/hooks/use-toast"
-import { useTemplateStore } from "@/lib/template-store"
+import { useTemplateStore, VARIABLE_FIELD_KEYS } from "@/lib/template-store"
 import { useCardStore } from "@/lib/card-store"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Card,
   CardContent,
@@ -20,9 +21,23 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, Building2, Save } from "lucide-react"
-import type { CardFieldKey, CardFields } from "@/lib/types"
-import { DEFAULT_CARD_FIELDS } from "@/lib/types"
+import {
+  ArrowLeft,
+  Building2,
+  Briefcase,
+  Mail,
+  Save,
+  User,
+} from "lucide-react"
+import type { CardFieldKey, CardFields, CardLayout } from "@/lib/types"
+import { DEFAULT_CARD_FIELDS, CARD_FIELD_LABELS } from "@/lib/types"
+import type { LucideIcon } from "lucide-react"
+
+const VARIABLE_ICONS: Record<string, LucideIcon> = {
+  name: User,
+  title: Briefcase,
+  email: Mail,
+}
 
 function CardCreateContent() {
   const router = useRouter()
@@ -31,10 +46,11 @@ function CardCreateContent() {
   const editCardId = searchParams.get("edit")
 
   const { success, error: showError } = useToast()
-  const { templates } = useTemplateStore()
+  const { templates, getById } = useTemplateStore()
   const { cards, addCard, updateCard } = useCardStore()
 
   const [fields, setFields] = useState<CardFields>({ ...DEFAULT_CARD_FIELDS })
+  const [layout, setLayout] = useState<CardLayout | null>(null)
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     templateId
   )
@@ -48,25 +64,36 @@ function CardCreateContent() {
         setFields({ ...card.fields })
         setSelectedTemplateId(card.templateId)
         setSelectedCompany(card.templateCompany)
+        // Load layout from template
+        const tpl = templates.find((t) => t.id === card.templateId)
+        if (tpl?.layout) setLayout(tpl.layout)
       }
     } else if (templateId) {
-      const template = templates.find((t) => t.id === templateId)
+      const template = getById(templateId)
       if (template) {
-        setFields({
-          company: template.fields.company,
-          address: template.fields.address,
-          phone: template.fields.phone,
-          website: template.fields.website,
-          name: "",
-          title: "",
-          email: "",
-        })
-        setSelectedCompany(template.company)
+        applyTemplate(template)
       }
     }
   }, [templateId, editCardId, templates, cards])
 
-  const handleFieldChange = (key: CardFieldKey, value: string) => {
+  const applyTemplate = (template: NonNullable<ReturnType<typeof getById>>) => {
+    setSelectedTemplateId(template.id)
+    setSelectedCompany(template.company)
+    setLayout(template.layout ?? null)
+    // Fixed fields from template, variable fields blank (or preserved)
+    setFields((prev) => ({
+      company: template.fixedFields?.company ?? template.fields.company,
+      phone: template.fixedFields?.phone ?? template.fields.phone,
+      address: template.fixedFields?.address ?? template.fields.address,
+      website: template.fixedFields?.website ?? template.fields.website,
+      // Keep previously entered personal info
+      name: prev.name,
+      title: prev.title,
+      email: prev.email,
+    }))
+  }
+
+  const handleVariableChange = (key: CardFieldKey, value: string) => {
     setFields((prev) => ({ ...prev, [key]: value }))
   }
 
@@ -90,21 +117,11 @@ function CardCreateContent() {
   }
 
   const handleSelectTemplate = (id: string) => {
-    const template = templates.find((t) => t.id === id)
-    if (template) {
-      setSelectedTemplateId(id)
-      setSelectedCompany(template.company)
-      setFields({
-        company: template.fields.company,
-        address: template.fields.address,
-        phone: template.fields.phone,
-        website: template.fields.website,
-        name: fields.name,
-        title: fields.title,
-        email: fields.email,
-      })
-    }
+    const template = getById(id)
+    if (template) applyTemplate(template)
   }
+
+  const hasTemplate = !!selectedTemplateId
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -128,15 +145,15 @@ function CardCreateContent() {
             </div>
           </div>
 
-          {/* Template picker (only if no template selected and not editing) */}
+          {/* Template picker */}
           {!selectedTemplateId && !editCardId && templates.length > 0 && (
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="text-lg">
-                  テンプレートを選択（任意）
+                  テンプレートを選択
                 </CardTitle>
                 <CardDescription>
-                  登録済みテンプレートを使うと、会社情報が自動入力されます
+                  会社テンプレートを選ぶと、会社情報（住所・電話等）が自動入力されます。個人情報だけ入力すればOKです。
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
@@ -158,27 +175,83 @@ function CardCreateContent() {
 
           {/* Editor */}
           <div className="grid gap-6 lg:grid-cols-2">
+            {/* Left: Preview */}
             <div className="flex flex-col gap-6">
               <Card>
                 <CardContent className="p-6">
                   <BusinessCardPreview fields={fields} />
                 </CardContent>
               </Card>
+
+              {/* Show fixed (read-only) template info */}
+              {hasTemplate && (
+                <Card className="bg-muted/50">
+                  <CardContent className="p-4">
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">
+                      会社情報（テンプレートから固定）
+                    </p>
+                    <div className="space-y-1 text-sm text-foreground">
+                      {fields.company && <p><span className="text-muted-foreground">会社名:</span> {fields.company}</p>}
+                      {fields.phone && <p><span className="text-muted-foreground">電話:</span> {fields.phone}</p>}
+                      {fields.address && <p><span className="text-muted-foreground">住所:</span> {fields.address}</p>}
+                      {fields.website && <p><span className="text-muted-foreground">Web:</span> {fields.website}</p>}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
+
+            {/* Right: Input fields */}
             <Card>
               <CardContent className="flex flex-col gap-6 p-6">
-                <FieldEditor
-                  fields={fields}
-                  onFieldChange={handleFieldChange}
-                />
+                <div>
+                  <p className="mb-3 text-sm font-medium text-muted-foreground">
+                    {hasTemplate
+                      ? "個人情報を入力してください"
+                      : "名刺情報を入力"}
+                  </p>
+
+                  {/* Variable fields (always editable) */}
+                  <div className="flex flex-col gap-3">
+                    {VARIABLE_FIELD_KEYS.map((key) => {
+                      const Icon = VARIABLE_ICONS[key] ?? User
+                      return (
+                        <div key={key} className="flex flex-col gap-1.5">
+                          <Label
+                            htmlFor={`field-${key}`}
+                            className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                            {CARD_FIELD_LABELS[key]}
+                            {key === "name" && (
+                              <span className="text-destructive">*</span>
+                            )}
+                          </Label>
+                          <Input
+                            id={`field-${key}`}
+                            type={key === "email" ? "email" : "text"}
+                            value={fields[key]}
+                            onChange={(e) =>
+                              handleVariableChange(key, e.target.value)
+                            }
+                            placeholder={CARD_FIELD_LABELS[key]}
+                            className="h-9 text-sm"
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
                 <Separator />
+
                 <div className="flex flex-col gap-2">
                   <Button onClick={handleSave} className="w-full">
                     <Save className="mr-2 h-4 w-4" />
                     {editCardId ? "名刺を更新" : "名刺を保存"}
                   </Button>
                   <ExportButton />
-                  <IDMLExportButton fields={fields} />
+                  <IDMLExportButton fields={fields} layout={layout} />
                 </div>
               </CardContent>
             </Card>
