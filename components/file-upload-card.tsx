@@ -6,9 +6,9 @@ import { Upload, X, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024
-const ACCEPTED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".pdf"]
-const ACCEPTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"]
+const MAX_FILE_SIZE = 50 * 1024 * 1024
+const ACCEPTED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".pdf", ".idml"]
+const ACCEPTED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf", "application/vnd.adobe.indesign-idml-package"]
 
 interface FileUploadCardProps {
   label: string
@@ -34,7 +34,7 @@ export function FileUploadCard({
         if (rejection.errors.some((e: any) => e.code === "file-too-large")) {
           onError("ファイルサイズは10MB以下にしてください")
         } else if (rejection.errors.some((e: any) => e.code === "file-invalid-type")) {
-          onError("JPEG/PNG/WebP/PDF形式のファイルを選択してください")
+          onError("JPEG/PNG/WebP/PDF/IDML形式のファイルを選択してください")
         } else {
           onError("ファイルのアップロードに失敗しました")
         }
@@ -53,6 +53,8 @@ export function FileUploadCard({
     accept: {
       "image/*": [".jpg", ".jpeg", ".png", ".webp"],
       "application/pdf": [".pdf"],
+      "application/vnd.adobe.indesign-idml-package": [".idml"],
+      "application/zip": [".idml"],
     },
     maxSize: MAX_FILE_SIZE,
     multiple: false,
@@ -124,7 +126,7 @@ export function FileUploadCard({
                 クリックまたはドラッグ＆ドロップ
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                JPEG, PNG, WebP, PDF (最大10MB)
+                JPEG, PNG, WebP, PDF, IDML (最大50MB)
               </p>
             </div>
           </div>
